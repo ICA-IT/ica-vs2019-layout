@@ -1,0 +1,38 @@
+; Copyright (c) uib gmbh (www.uib.de)
+; This sourcecode is owned by uib gmbh
+; and published under the Terms of the General Public License.
+; credits: http://www.opsi.org/en/credits/
+
+include_append "%ScriptPath%\check_msi_exitcode.opsiscript"
+
+DefVar $found$
+DefVar $UninstallProgram$
+
+Set $found$     = "false"
+Set $MsiId$     = '{}'
+
+Message "Deleting layout files for " + $ProductId$ + " ..."
+
+
+if (not($local_layout$ = '')) and (not($local_layout$ = "not used"))
+   if FileExists($local_layout$)
+      Files_uninstall_local
+   endif
+endif
+
+if (not($network_layout$ = '')) and (not($network_layout$ = "not used"))
+   if FileExists($network_layout$)
+      Files_uninstall_network
+   endif
+endif
+
+;-----------------------------------------------------
+
+
+[Files_uninstall_local]
+del -sf "$local_layout$\"
+
+
+[Files_uninstall_network]
+del -sf "$network_layout$\"
+

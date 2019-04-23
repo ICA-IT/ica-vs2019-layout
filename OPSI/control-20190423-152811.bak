@@ -1,0 +1,31 @@
+[Package]
+version: 1
+depends: 
+incremental: False
+
+[Product]
+type: localboot
+id: ica-vs2019-layout
+name: ica-vs2019-layout
+description: Download Visual Studio 2019 and create a layout folder on the opsi server
+
+advice: 
+version: 1630314748.1554796130
+priority: 0
+licenseRequired: False
+productClasses: 
+setupScript: setup.opsiscript
+uninstallScript: uninstall.opsiscript
+updateScript: 
+alwaysScript: 
+onceScript: 
+customScript: 
+userLoginScript:
+
+[Changelog]
+ica-vs2019-layout (1630314748.1554796130-1) stable; urgency=low
+
+	* initial: created by opsi-setup-detector
+
+ -- opsisetupdetector.exe <info@uib.de>  4/23/2019 15:01:20
+

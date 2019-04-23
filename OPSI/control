@@ -1,0 +1,49 @@
+[Package]
+version: 1
+depends: 
+incremental: False
+
+[Product]
+type: localboot
+id: ica-vs2019-layout
+name: ica-vs2019-layout
+description: Download Visual Studio 2019 and create a layout folder on the opsi server
+advice: The Visual Studio Installer will download and save the layout files in a folder on the local computer that thsi script runs on (be sure that there is enough free file storage space!). After the installer finishes, the script will copy the layout files to the opsi server and delete the local copy.
+
+
+version: 1630314748.1554796130
+priority: 0
+licenseRequired: False
+productClasses: 
+setupScript: setup.opsiscript
+uninstallScript: uninstall.opsiscript
+updateScript: update.opsiscript
+alwaysScript: 
+onceScript: 
+customScript: 
+userLoginScript: 
+
+[ProductProperty]
+type: unicode
+name: network_layout
+multivalue: False
+editable: True
+description: The network location where the layout files will end up (make sure it is a writable share).
+values: [""]
+default: ["\\\\server\\opsi_images\\VS2019"]
+
+[ProductProperty]
+type: unicode
+name: local_layout
+multivalue: False
+editable: True
+description: The local folder location where the Visual Studio Iinstaller will save (temporarily) the layout files.
+values: [""]
+default: ["c:\\vsoffline"]
+
+[Changelog]
+ica-vs2019-layout (1630314748.1554796130-1) stable; urgency=low
+
+	* initial: created by opsi-setup-detector
+
+ -- opsisetupdetector.exe <info@uib.de>  4/23/2019 15:01:20

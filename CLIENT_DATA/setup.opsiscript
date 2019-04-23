@@ -1,0 +1,141 @@
+; ----------------------------------------------------------------
+; Copyright (c) uib gmbh (www.uib.de)
+; This sourcecode is owned by uib
+; and published under the Terms of the General Public License.
+; credits: http://www.opsi.org/en/credits/
+; ----------------------------------------------------------------
+
+;****************************************
+; SETUPTYPE      custom
+;****************************************
+; PRODUCTID      ica-vs2019-layout
+; SETUPFILE      vs_community__1630314748.1554796130.exe
+;****************************************
+; LICENSE        false     
+; PRODUCTDESC    Download Visual Studio 2019 and create a layout folder on the opsi server
+
+; PRODUCTNAME    ica-vs2019-layout
+; PRODUCTSIZE    40 GB
+; PRODUCTVER     1630314748.1554796130
+;****************************************
+; SETUPSCRIPT    setup.opsiscript
+; UNINSSCRIPT    uninstall.opsiscript
+; UPDATESCRIPT   update.opsiscript
+;****************************************
+; MSIID          {}
+; USE-MST        
+; INSTALLDIR     (not used)
+;****************************************
+; TIMESTAMP      4/23/2019 15:01:20
+;****************************************
+
+[Actions]
+requiredWinstVersion >= "4.11.4.3"
+ScriptErrorMessages = false
+
+DefVar $SetupType$
+DefVar $ProductId$ 
+DefVar $Setupfile$ 
+DefVar $InstallDir$
+DefVar $MinimumSpace$
+DefVar $ExitCode$
+DefVar $ErrorMsg$
+DefVar $LicenseRequired$
+DefVar $LicenseKey$
+DefVar $LicensePool$
+DefVar $MsiId$
+DefVar $NsisInstallBatch$
+DefVar $LogDir$
+
+DefVar $network_layout$
+DefVar $local_layout$
+DefVar $network_installer$
+
+set $network_layout$ = GetProductProperty("network_layout","\\server\opsi_images\VS2019")
+set $local_layout$ = GetProductProperty("local_layout","c:\vsoffline")
+
+Set $LogDir$ = "%opsiLogDir%"
+
+include_append "%ScriptPath%\check_msi_exitcode.opsiscript"
+
+; ----------------------------------------------------------------
+Set $SetupType$       = ""
+; ----------------------------------------------------------------
+
+; $ProductId$ is the name of the product in opsi, only lower letters, no umlauts, no white spaces, use '-' as a seperator
+Set $ProductId$       = "ica-vs2019-layout"
+Set $Setupfile$       = "vs_community__1630314748.1554796130.exe"
+; the path where we find the product after the installation
+Set $InstallDir$      = "(not used)"
+Set $LicenseRequired$ = "false"
+Set $LicensePool$     = "p_" + $ProductId$
+Set $MsiId$           = "{}"
+Set $MinimumSpace$    = "40 GB"
+; ----------------------------------------------------------------
+; ----------------------------------------------------------------
+
+if not(HasMinimumSpace ("%SystemDrive%", $MinimumSpace$))
+   LogError "Not enough space on %SystemDrive%, " + $MinimumSpace$ + " on drive %SystemDrive% needed for " + $ProductId$
+   isFatalError "No Space"
+   ; Stop process and set installation status to failed
+else
+   comment "Show product picture"
+   ShowBitmap "%ScriptPath%\" + $ProductId$ + ".png" $ProductId$
+
+   if FileExists("%ScriptPath%\delsub.opsiscript")
+      comment "Start uninstall sub section"
+      Sub "%ScriptPath%\delsub.opsiscript"
+   endif
+ 
+   
+   comment "Start setup program"
+   if not(FileExists($local_layout$))
+; copy the installer from the opsi share to a local scratch file location   
+      Files_install
+      ChangeDirectory "%opsiTmpDir%"
+   ;----------------------------------------------
+;      Winbatch_install_layout /WaitForProcessEnding "Setup.exe"
+      Winbatch_install_layout
+   ;----------------------------------------------
+      Sub_check_exitcode
+; delete the local copy of the installer      
+      Files_remove
+   endif
+
+; xcopy /e c:\vsoffline \\server\opsi_images\VS2019 
+   Files_move
+; rm -R c:\vsoffline   
+   Files_cleanup
+; icacls \\server\opsi_images\VS2019\vs_community__1630314748.1554796130.exe /grant "Everyone":RX
+   set $network_installer$ = $network_layout$ + "\" + $Setupfile$
+   if not(FileExists($network_installer$))
+      LogError "Unable to locate the Visual Studio Installer on the opsi server. It should be located at " + $network_installer$
+      isFatalError "Installer missing"
+   ; Stop process and set installation status to failed   
+   endif
+   Winbatch_grant_execute   
+    
+endif
+
+; ----------------------------------------------------------------
+; install section
+; ----------------------------------------------------------------
+
+[Winbatch_install_layout]
+"$Setupfile$" --layout "$local_layout$" --lang en-US --add Microsoft.VisualStudio.Workload.CoreEditor --add Microsoft.VisualStudio.Workload.NativeDesktop --add Component.GitHub.VisualStudio --add Microsoft.Component.HelpViewer --add Microsoft.VisualStudio.Component.Git --add Microsoft.VisualStudio.Component.Windows10SDK.17763 --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Debugger.JustInTime --add Microsoft.VisualStudio.Component.VC.ATLMFC --add Microsoft.Component.VC.Runtime.UCRTSDK --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.ATL --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Component.VC.Modules.x86.x64 --wait --passive
+
+
+[Files_install]
+copy "%ScriptPath%\$Setupfile$" "%opsiTmpDir%"
+ 
+[Files_remove]
+del "%opsiTmpDir%\$Setupfile$"
+
+[Files_move]
+copy -s "$local_layout$\*" "$network_layout$"
+
+[Files_cleanup]
+del -s "$local_layout$"
+ 
+[Winbatch_grant_execute]
+icacls "$network_installer$" /grant "Everyone":RX
