@@ -26,8 +26,8 @@ name: network_layout
 multivalue: False
 editable: True
 description: The network location where the layout files will end up (make sure it is a writable share).
-values: ["\\\\server\\opsi_images\\VS2019"]
-default: ["\\\\server\\opsi_images\\VS2019"]
+values: [""]
+default: []
 
 [ProductProperty]
 type: unicode
@@ -35,8 +35,8 @@ name: local_layout
 multivalue: False
 editable: True
 description: The local folder location where the Visual Studio Iinstaller will save (temporarily) the layout files.
-values: ["c:\\vsoffline"]
-default: ["c:\\vsoffline"]
+values: [""]
+default: []
 
 [Changelog]
 ica-vs2019-layout (1630314748.1554796130-1) stable; urgency=low
