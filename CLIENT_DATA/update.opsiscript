@@ -87,8 +87,8 @@ else
    
    comment "Start update program"
    if FileExists($network_layout$)
-      ChangeDirectory "$network_layout$"
-      set $network_install_prog$ = $network_layout$ + $Setupfile$
+;      ChangeDirectory "$network_layout$"
+      set $network_install_prog$ = $network_layout$ + "\" + $Setupfile$
       if not(FileExists($network_install_prog$))
          LogError "Visual Studio Installer is missing. It should be located at: " + $network_install_prog$
          isFatalError "No Installer"
@@ -117,7 +117,7 @@ endif
 ; ----------------------------------------------------------------
 
 [Winbatch_update_layout]
-"$Setupfile$"
+"$network_install_prog$" --passive
 
 [Winbatch_save_logs]
 ;"%ScriptPath%\Collect.exe" -zip:%opsiLogDir%\ica-vs2019-layout-update.zip
