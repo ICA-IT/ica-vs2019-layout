@@ -50,9 +50,11 @@ DefVar $LogDir$
 DefVar $network_layout$
 DefVar $local_layout$
 DefVar $network_installer$
+DefVar $copy_to_net$
 
 set $network_layout$ = GetProductProperty("network_layout","\\server\opsi_images\VS2019")
 set $local_layout$ = GetProductProperty("local_layout","c:\vsoffline")
+set $copy_to_net$ = GetProductProperty("copy_to_net","true")
 
 Set $LogDir$ = "%opsiLogDir%"
 
@@ -90,30 +92,71 @@ else
    
    comment "Start setup program"
    if not(FileExists($local_layout$))
-; copy the installer from the opsi share to a local scratch file location   
+; copy the installer from the opsi share to a local scratch file location 
+; if there is already a file out there, delete it first
+      if FileExists("%opsiTmpDir%\$Setupfile$")
+         Files_remove
+      endif
       Files_install
+      set $ExitCode$ = getLastExitCode
+      if not($ExitCode$ = "0")
+         ; Stop process and set installation status to failed
+         LogError "Unable to move Installer to local scratch location: %opsiTmpDir%"
+         isFatalError "Installer move fail"       
+      endif
       ChangeDirectory "%opsiTmpDir%"
    ;----------------------------------------------
 ;      Winbatch_install_layout /WaitForProcessEnding "Setup.exe"
       Winbatch_install_layout
    ;----------------------------------------------
       Sub_check_exitcode
+; zip up the latest log files and save them locally      
+      Winbatch_save_logs
+; check error code from above and exit if necessary      
+	  if not($ExitCode$ = "0")
+	     if not($ErrorMsg$ = "")
+            isFatalError "Installer failed"
+	     else
+            isFatalError "Unknown Exitcode"
+	     endif
+	  endif
 ; delete the local copy of the installer      
       Files_remove
    endif
 
-; xcopy /e c:\vsoffline \\server\opsi_images\VS2019 
-   Files_move
-; rm -R c:\vsoffline   
-   Files_cleanup
+; xcopy /e c:\vsoffline \\server\opsi_images\VS2019
+   if ($copy_to_net$ = "true")
+;      Files_move
+      DosBatch_move
+      set $ExitCode$ = getLastExitCode
+      if not($ExitCode$ = "0")
+         ; Stop process and set installation status to failed
+         LogError "Unable to copy local layout files to network share location: " + $network_layout$
+         isFatalError "Layout move fail"       
+      endif      
+; rmdir /S /Q c:\vsoffline   
+      Files_cleanup
+      set $ExitCode$ = getLastExitCode
+      if not($ExitCode$ = "0")
+         ; Stop process and set installation status to failed
+         LogError "Unable to remove the local copy of the layout files. location: " + $local_layout$
+         isFatalError "Cleanup fail"       
+      endif            
 ; icacls \\server\opsi_images\VS2019\vs_community__1630314748.1554796130.exe /grant "Everyone":RX
-   set $network_installer$ = $network_layout$ + "\" + $Setupfile$
-   if not(FileExists($network_installer$))
-      LogError "Unable to locate the Visual Studio Installer on the opsi server. It should be located at " + $network_installer$
-      isFatalError "Installer missing"
+      set $network_installer$ = $network_layout$ + "\" + $Setupfile$
+      if not(FileExists($network_installer$))
+         LogError "Unable to locate the Visual Studio Installer on the opsi server. It should be located at " + $network_installer$
+         isFatalError "Installer missing"
    ; Stop process and set installation status to failed   
+      endif
+      Winbatch_grant_execute
+      set $ExitCode$ = getLastExitCode
+      if not($ExitCode$ = "0")
+         ; Stop process and set installation status to failed
+         LogError "Unable to grant execute permission to the Installer on the share. location: " + $network_installer$
+         isFatalError "Grant Execute fail"       
+      endif                  
    endif
-   Winbatch_grant_execute   
     
 endif
 
@@ -122,8 +165,13 @@ endif
 ; ----------------------------------------------------------------
 
 [Winbatch_install_layout]
-"$Setupfile$" --layout "$local_layout$" --lang en-US --add Microsoft.VisualStudio.Workload.CoreEditor --add Microsoft.VisualStudio.Workload.NativeDesktop --add Component.GitHub.VisualStudio --add Microsoft.Component.HelpViewer --add Microsoft.VisualStudio.Component.Git --add Microsoft.VisualStudio.Component.Windows10SDK.17763 --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Debugger.JustInTime --add Microsoft.VisualStudio.Component.VC.ATLMFC --add Microsoft.Component.VC.Runtime.UCRTSDK --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.ATL --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Component.VC.Modules.x86.x64 --wait --passive
+;"$Setupfile$" --layout "$local_layout$" --lang en-US --add Microsoft.VisualStudio.Workload.CoreEditor --add Microsoft.VisualStudio.Workload.NativeDesktop --add Component.GitHub.VisualStudio --add Microsoft.Component.HelpViewer --add Microsoft.VisualStudio.Component.Git --add Microsoft.VisualStudio.Component.Windows10SDK.17763 --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Debugger.JustInTime --add Microsoft.VisualStudio.Component.VC.ATLMFC --add Microsoft.Component.VC.Runtime.UCRTSDK --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.ATL --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Component.VC.Modules.x86.x64 --passive
+"$Setupfile$" --layout "c:\vsoffline" --lang en-US --add Microsoft.VisualStudio.Workload.CoreEditor --add Microsoft.VisualStudio.Workload.NativeDesktop --add Component.GitHub.VisualStudio --add Microsoft.Component.HelpViewer --add Microsoft.VisualStudio.Component.Git --add Microsoft.VisualStudio.Component.Windows10SDK.17763 --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Debugger.JustInTime --add Microsoft.VisualStudio.Component.VC.ATLMFC --add Microsoft.Component.VC.Runtime.UCRTSDK --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.ATL --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Component.VC.Modules.x86.x64 --passive
+;"$Setupfile$" --layout "c:\vsoffline" --lang en-US --add Microsoft.VisualStudio.Workload.CoreEditor  --passive
 
+[Winbatch_save_logs]
+;"%ScriptPath%\Collect.exe" -zip:%opsiLogDir%\ica-vs2019-layout.zip
+"%ScriptPath%\Collect.exe" -quiet -zip:%opsiLogDir%\ica-vs2019-layout.zip
 
 [Files_install]
 copy "%ScriptPath%\$Setupfile$" "%opsiTmpDir%"
@@ -134,8 +182,13 @@ del "%opsiTmpDir%\$Setupfile$"
 [Files_move]
 copy -s "$local_layout$\*" "$network_layout$"
 
+[DosBatch_move]
+;xcopy /e c:\vsoffline \\server\opsi_images\VS2019\
+xcopy /e "$local_layout$" "$network_layout$\"
+
 [Files_cleanup]
 del -s "$local_layout$"
  
 [Winbatch_grant_execute]
+;icacls "\\server\opsi_images\VS2019\vs_community__1630314748.1554796130.exe" /grant "Everyone":RX
 icacls "$network_installer$" /grant "Everyone":RX

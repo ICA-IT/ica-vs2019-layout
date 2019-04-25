@@ -17,12 +17,25 @@ Message "Deleting layout files for " + $ProductId$ + " ..."
 if (not($local_layout$ = '')) and (not($local_layout$ = "not used"))
    if FileExists($local_layout$)
       Files_uninstall_local
+      set $ExitCode$ = getLastExitCode
+      if not($ExitCode$ = "0")
+         ; Stop process and set installation status to failed
+         LogError "Unable to delete local copy of the layout files. location: " + $local_layout$
+         isFatalError "Local clean fail"       
+      endif      
    endif
 endif
 
-if (not($network_layout$ = '')) and (not($network_layout$ = "not used"))
+if (not($network_layout$ = '')) and (not($network_layout$ = "not used")) and ($copy_to_net$ = "true")
    if FileExists($network_layout$)
-      Files_uninstall_network
+;      Files_uninstall_network
+      DosBatch_uninstall_network
+      set $ExitCode$ = getLastExitCode
+      if not($ExitCode$ = "0")
+         ; Stop process and set installation status to failed
+         LogError "Unable to delete network copy of the layout files. location: " + $network_layout$
+         isFatalError "Network clean fail"       
+      endif      
    endif
 endif
 
@@ -35,4 +48,8 @@ del -sf "$local_layout$\"
 
 [Files_uninstall_network]
 del -sf "$network_layout$\"
+
+[DosBatch_uninstall_network]
+; rmdir /S /Q \\server\opsi_images\VS2019
+rmdir /S /Q "$network_layout$"
 

@@ -18,9 +18,11 @@ DefVar $LicensePool$
 
 DefVar $network_layout$
 DefVar $local_layout$
+DefVar $copy_to_net$
 
 set $network_layout$ = GetProductProperty("network_layout","\\server\opsi_images\VS2019")
 set $local_layout$ = GetProductProperty("local_layout","c:\vsoffline")
+set $copy_to_net$ = GetProductProperty("copy_to_net","false")
 
 Set $LogDir$ = "%opsiLogDir%"
 

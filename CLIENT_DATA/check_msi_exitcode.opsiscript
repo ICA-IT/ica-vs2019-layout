@@ -6,6 +6,7 @@ set $ExitCode$ = getLastExitCode
 set $ErrorMsg$ = ""
 
 comment "check the exit code"
+
 if ($ExitCode$ = "0" OR $ExitCode$ ="1641" OR $ExitCode$ ="3010")
 	comment "non critical Exitcodes"
 	if ($ExitCode$ = "0")
@@ -15,7 +16,7 @@ if ($ExitCode$ = "0" OR $ExitCode$ ="1641" OR $ExitCode$ ="3010")
 		comment "ExitCode = "+$ExitCode$+" ERROR_SUCCESS_REBOOT_INITIATED The installer has started a reboot. This error code not available on Windows Installer version 1.0."
 	endif
 	if ($ExitCode$ = "3010")
-		comment "ExitCode = "+$ExitCode$+" ERROR_SUCCESS_REBOOT_REQUIRED A reboot is required to complete the install. This does not include installs where the ForceReboot action is run. This error code not available on Windows Installer version 1.0."
+		comment "ExitCode = "+$ExitCode$+" ERROR_SUCCESS_REBOOT_REQUIRED A reboot is required to complete the install. This does not include installs where the ForceReboot action is run."
 	endif
 else
 	comment "critical Exitcodes"
@@ -157,12 +158,16 @@ else
 	if ($ExitCode$ = "1644")
 			set $ErrorMsg$ = "ExitCode = "+$ExitCode$+" ERROR_INSTALL_TRANSFORM_REJECTED One or more customizations are not permitted by system policy. This error code is available with Windows Installer versions 2.0 or later."
 	endif
+	if ($ExitCode$ = "5004")
+			set $ErrorMsg$ = "ExitCode = "+$ExitCode$+" Operation was canceled."
+	endif
+	if ($ExitCode$ = "5007")
+			set $ErrorMsg$ = "ExitCode = "+$ExitCode$+" Operation was blocked - the computer does not meet the requirements."
+	endif	
 	if not ($ErrorMsg$ = "")
 		logError $ErrorMsg$
-		isFatalError "Installer failed"
 	else
-		logError "Unknown Installer Error: Exitcode = "+$ExitCode$
-		isFatalError "Unknown Exitcode"
+		logError "Unknown Installer Error: Exitcode = "+$ExitCode$+" : Check the logs for more information"
 	endif
 endif
 
