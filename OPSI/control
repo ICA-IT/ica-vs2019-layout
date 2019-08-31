@@ -9,7 +9,7 @@ name: ica-vs2019-layout
 description: Download Visual Studio 2019 and create a layout folder on the opsi server
 advice: The Visual Studio Installer will download and save the layout files in a folder on the local computer that this script runs on (be sure that there is enough free file storage space!). After the installer finishes, the script will copy the layout files to the opsi server and delete the local copy.
 IMPORTANT NOTE: This script does not work when run in a SYSTEM context (such as remotely invoked opsi scripts are run). However, it runs fine when invoked as a local adminiistrator. Therefore, to run it, log onto a local machine managed by opsi and run winst32.exe as Administartor (usually found in : C:\Program Files (x86)\opsi.org\opsi-client-agent\opsi-winst ). Select the appropriate script directly from the opsi server (probably located at : \\SERVER\opsi_workbench\ica-vs2019-layout\CLIENT_DATA\setup.opsiscript ) and selct "Start". This appears to be a Visual Studio Installer 2019 bug that only effects layout mode.
-version: 1630314748.1554796130
+version: 1804629285.1543436600
 priority: 0
 licenseRequired: False
 productClasses: 
